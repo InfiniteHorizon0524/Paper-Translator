@@ -19,3 +19,4 @@ api-settings.json
 *.pdf
 *.exe
 *.zip
+.git
