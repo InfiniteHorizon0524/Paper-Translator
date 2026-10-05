@@ -1,0 +1,6 @@
+fastapi==0.142.2
+uvicorn==0.54.0
+httpx==0.28.1
+PyMuPDF==1.28.2
+python-multipart==0.0.32
+pywebview==6.2.1

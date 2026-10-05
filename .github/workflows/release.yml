@@ -1,0 +1,68 @@
+name: Build and release Windows app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - paperreader/__init__.py
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Check public source
+        run: python scripts/check_public_files.py
+      - name: Install build and test dependencies
+        run: python -m pip install --target .deps -r requirements-dev.txt
+      - name: Run regressions
+        run: |
+          $env:PYTHONPATH = Join-Path $PWD '.deps'
+          python -m pytest tests -q
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/ui_smoke.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/translation_smoke.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build installer and portable app
+        run: python -S scripts/build.py
+      - name: Verify packaged app
+        run: |
+          $env:PAPERREADER_TEST_EXE = Join-Path $PWD 'dist/PaperReader/PaperReader.exe'
+          $env:PAPERREADER_TEST_ROOT = Join-Path $PWD '.test-data/packaged-ui'
+          python scripts/ui_smoke.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:PAPERREADER_TEST_ROOT = Join-Path $PWD '.test-data/packaged-background'
+          python scripts/translation_smoke.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          $version = python -c 'from paperreader import __version__; print(__version__)'
+          $tag = "v$version"
+          $assets = @(Get-ChildItem -LiteralPath release -File | Where-Object { $_.Name -like "PaperReader-$version-*" -or $_.Name -eq 'SHA256SUMS.txt' } | ForEach-Object { $_.FullName })
+          if (-not (Test-Path -LiteralPath "release/PaperReader-$version-Setup-x64.exe")) { throw 'Installer is missing' }
+          gh release view $tag --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) { throw 'This version has already been published; bump the version before releasing' }
+          gh release create $tag @assets --target $env:RELEASE_COMMIT --title "PaperReader $version" --notes-file CHANGELOG.md --latest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

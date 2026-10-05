@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PaperReader · 让论文读起来更轻松</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/vendor/katex/katex.min.js" defer></script>
+  <script src="/rich-text.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="library-sidebar" aria-label="文献库导航">
+    <a class="brand" href="/"><span class="brand-icon">P<span>r</span></span><span>PaperReader<small>你的中文论文工作台</small></span></a>
+    <button class="primary import-button" id="import-open"><span>＋</span> 导入论文</button>
+    <nav class="library-nav" aria-label="论文来源"><button class="active" data-library-filter="all"><span>▤</span> 全部论文 <span id="all-count">0</span></button><button data-library-filter="upload"><span>▧</span> 本地 PDF</button><button data-library-filter="arxiv"><span>↗</span> arXiv 论文</button></nav>
+    <div class="library-label"><span>我的论文</span><span id="paper-count">0</span></div>
+    <label class="search-box"><span>⌕</span><input id="search" placeholder="搜索论文标题" aria-label="搜索论文标题"></label>
+    <div id="library" class="library"></div>
+    <div class="sidebar-bottom"><div class="local-label"><span class="dot"></span>论文与译文保存在本机</div><button id="settings-open" class="settings-button"><span>⚙</span> API 设置 <span id="api-indicator" class="api-indicator">未配置</span></button><div class="version">PaperReader <span id="app-version"></span></div></div>
+  </aside>
+  <main class="workspace">
+    <header class="topbar"><div class="topbar-leading"><button class="quiet sidebar-toggle" id="sidebar-toggle" aria-label="收起论文栏，专注阅读" title="收起论文栏，专注阅读" aria-controls="library-sidebar" aria-expanded="true">☰</button><button class="quiet hidden" id="reader-back" data-reader-tool>‹ 文献库</button><div class="breadcrumb"><strong id="breadcrumb">文献库</strong></div></div><nav class="topbar-actions" aria-label="阅读工具"><div class="tabs hidden" id="view-controls" data-reader-tool><button data-view="original">原文</button><button data-view="translation">译文</button><button class="active" data-view="split">对照</button></div><button class="quiet hidden" id="outline-toggle" data-reader-tool aria-controls="outline-panel" aria-expanded="false">目录</button><button class="quiet hidden" id="reading-settings-open" data-reader-tool title="字号与字体设置" aria-label="阅读设置">Aa</button><button class="assistant-toggle" id="assistant-toggle" aria-controls="chat-panel" aria-expanded="false" disabled><span aria-hidden="true">✦</span> 论文助手</button><button class="quiet" id="settings-top">API 设置</button></nav></header>
+    <div class="welcome" id="welcome">
+      <div class="library-heading"><div><div class="eyebrow">一卷论文，一处静心</div><h1 id="library-title">全部论文</h1><p>你的文献，安放于此。选一篇，接着读。</p></div><div class="library-heading-actions"><button class="secondary" id="welcome-arxiv">从 arXiv 获取 ↗</button><button class="primary" id="welcome-upload">＋ 上传 PDF</button></div></div>
+      <div class="library-list-toolbar"><span id="library-results">0 篇论文</span><label>排序 <select id="library-sort" aria-label="论文排序"><option value="created">最近导入</option><option value="opened">最近阅读</option><option value="title">标题</option></select></label></div>
+      <div class="library-columns" aria-hidden="true"><span>论文</span><span>来源 / 页数</span><span>阅读进度</span></div>
+      <div id="workspace-library" class="workspace-library" role="list"></div>
+      <div class="library-empty-state" id="library-empty-state"><span class="empty-book" aria-hidden="true">▤</span><h2>从第一篇论文开始</h2><p>上传 PDF，或输入 arXiv 编号。<br>译成中文，核对原文，随时向论文提问。</p></div>
+      <div class="library-local-note"><span class="dot"></span>论文与译文保存在本机 · 使用你自己的 API 模型</div>
+    </div>
+    <div id="reader" class="reader hidden">
+      <div class="reading-progress" aria-hidden="true"><i id="reading-progress-bar"></i></div>
+      <div class="reading-grid">
+        <section class="document-panel">
+          <div class="document-content split-view" id="document-content">
+            <section id="translation-pane" class="translation-pane" aria-label="论文正文"><div class="pane-heading"><span>正文 <small id="body-language">中文译文 / 未译页显示原文</small></span><span class="pane-hint">连续阅读</span></div><div class="reading-scroll" id="reading-scroll"><article class="paper-article"><header class="paper-header"><div class="eyebrow" id="paper-source">PDF · 本地论文</div><h1 id="paper-title"></h1><div class="paper-meta"><span id="paper-author"></span><span id="paper-pages"></span><button id="paper-delete" class="text-button danger">删除论文</button></div><div class="paper-reading-note">已译页面显示中文，未译页面显示英文原文。解释与问答在“论文助手”中查看。</div></header><div id="translation-text"></div></article></div></section>
+            <div id="reading-splitter" class="reading-splitter" role="separator" tabindex="0" aria-label="调整正文与原文栏宽" aria-orientation="vertical" aria-valuemin="30" aria-valuemax="70" aria-valuenow="50" title="拖动调节栏宽，双击恢复；方向键也可调节"></div>
+            <section class="original-pane" id="original-pane" aria-label="原始 PDF"><div class="pane-heading pdf-heading"><span>原始 PDF <small id="pdf-page-label">1 / 1</small></span><div class="pdf-heading-actions"><label class="follow-control"><input id="follow-reading" type="checkbox" checked>跟随</label><div class="zoom-controls"><button id="zoom-out" title="缩小原文" aria-label="缩小原文">−</button><button id="zoom-reset" title="恢复原文宽度">100%</button><button id="zoom-in" title="放大原文" aria-label="放大原文">＋</button></div><button id="pdf-download" class="text-button">PDF ↗</button><button class="quiet" id="pdf-close" aria-label="收起原始 PDF" title="收起原始 PDF">×</button></div></div><div class="pdf-scroll" id="pdf-scroll"><div class="pdf-canvas" id="pdf-canvas"><img id="pdf-page" alt="论文原文页面"><div id="pdf-figure-highlight" class="pdf-figure-highlight hidden" aria-hidden="true"></div></div><div id="image-error" class="hidden muted">原文页面加载失败，请重新选择页码。</div></div></section>
+          </div>
+          <footer class="translation-toolbar"><span id="translation-status">中文翻译，逐页保存</span><div class="page-controls"><button id="page-prev" title="上一页">‹</button><input id="page-number" type="number" min="1" value="1" aria-label="当前页"><span id="page-total">/ 1</span><button id="page-next" title="下一页">›</button></div><div><button id="export-translation" class="text-button">导出译文 ↓</button><button id="translation-lock" class="secondary small translation-lock" type="button" aria-pressed="false" aria-label="锁定这篇论文的翻译" title="锁定后禁止翻译和重译"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path id="translation-lock-shackle" d="M8 10V6a4 4 0 0 1 8 0"></path><path d="M12 15v2"></path></svg><span id="translation-lock-label">翻译锁：已解锁</span></button><button id="translate-current" class="secondary small">翻译本页</button><button id="translate-from-current" class="secondary small" title="从当前页翻译到最后一页，跳过已完成页面">翻译本页及之后页面</button><button id="translate-all" class="primary small">翻译全文</button><button id="retranslate-all" class="text-button" title="重新调用 API 翻译所有页面，逐页替换已有译文">重译全文</button><button id="translate-stop" class="secondary small hidden">停止</button></div></footer>
+        </section>
+        <aside class="chat-panel hidden" id="chat-panel" aria-labelledby="assistant-title"><div class="chat-header"><h2 id="assistant-title"><span class="sparkle" aria-hidden="true">✦</span> 论文助手</h2><div class="chat-header-actions"><button id="chat-clear" class="quiet" title="清空对话" aria-label="清空对话">↺</button><button id="chat-close" class="quiet" title="收起论文助手" aria-label="收起论文助手">×</button></div></div><div class="chat-model" id="chat-model">使用你的模型，读懂这篇论文</div><div class="chat-messages" id="chat-messages"></div><div id="chat-status" class="chat-status" aria-live="polite"></div><div class="chat-composer"><textarea id="question" rows="3" placeholder="关于这篇论文，你想了解什么？" aria-label="向论文提问"></textarea><div class="composer-bottom"><span>Enter 发送 · Shift + Enter 换行</span><button id="chat-send" class="send-button" aria-label="发送问题">↑</button><button id="chat-stop" class="send-button hidden" aria-label="停止回答">■</button></div></div><div class="chat-footnote">回答基于检索到的论文段落，请结合原文核对。</div></aside>
+      </div>
+      <aside id="outline-panel" class="outline-panel hidden" aria-label="论文目录"><div class="outline-heading"><h2>目录</h2><button id="outline-close" class="quiet" aria-label="收起目录">×</button></div><p id="outline-description">按章节与页码定位论文</p><div id="outline-items"></div></aside>
+    </div>
+  </main>
+</div>
+<dialog id="reading-settings-dialog"><div class="dialog-heading"><h2>阅读设置</h2><button class="close-button" data-close="reading-settings-dialog" aria-label="关闭阅读设置">×</button></div><label class="field-label" for="reading-font-size">正文字号 <span id="reading-font-label">18 px</span></label><input id="reading-font-size" type="range" min="16" max="26" value="18"><label class="field-label" for="reading-font-family">正文字体</label><select id="reading-font-family" class="field-input"><option value="serif">中文宋体 / 英文 Times New Roman</option></select><p class="field-hint">中文使用宋体，非公式英文使用 Times New Roman。标题加粗放大，脚注在每页末尾以横线分隔、字号小于正文。原始 PDF 使用独立缩放。</p><div class="dialog-footer"><button class="secondary" id="reading-reset">恢复默认</button><button class="primary" data-close="reading-settings-dialog">完成</button></div></dialog>
+<dialog id="import-dialog"><form id="import-form"><div class="dialog-heading"><div><div class="eyebrow">ADD TO YOUR LIBRARY</div><h2>导入一篇论文</h2></div><button type="button" class="close-button" data-close="import-dialog" aria-label="关闭">×</button></div><div class="import-tabs"><button type="button" class="active" data-import="upload">上传 PDF</button><button type="button" data-import="arxiv">arXiv 编号</button></div><div id="upload-section"><label class="dropzone" id="dropzone"><input id="file-input" type="file" accept=".pdf,application/pdf"><span class="upload-icon">↑</span><strong id="file-label">点击选择，或把 PDF 拖到这里</strong><small>带文字层的 PDF · 最大 50 MB · 最多 500 页</small></label></div><div id="arxiv-section" class="hidden"><label class="field-label" for="arxiv-id">arXiv 编号或论文链接</label><input id="arxiv-id" class="field-input" placeholder="例如 1706.03762"><p class="field-hint">支持新版、旧版编号，以及 arxiv.org/abs/ 或 /pdf/ 链接。</p></div><div class="inline-error" id="import-error" role="alert"></div><div class="dialog-footer"><span id="import-progress">导入后即可阅读原文</span><button type="submit" class="primary" id="import-submit">导入论文 →</button></div></form></dialog>
+<dialog id="settings-dialog"><form id="settings-form">
+  <div class="dialog-heading"><div><div class="eyebrow">MAKE IT YOURS</div><h2>连接你的 AI 模型</h2></div><button type="button" class="close-button" data-close="settings-dialog" aria-label="关闭">×</button></div>
+  <p class="settings-intro">使用兼容 OpenAI Chat Completions 的 API 服务。<br>论文翻译和问答会使用这里的配置。</p>
+  <label class="field-label" for="provider">服务预设</label><select id="provider" class="field-input"><option value="custom">自定义兼容服务</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="local">本地模型 / Ollama</option></select>
+  <label class="field-label" for="base-url">API Base URL</label><input id="base-url" class="field-input" type="url" required placeholder="https://api.example.com/v1">
+  <label class="field-label" for="model">模型名称</label><input id="model" class="field-input" required placeholder="输入服务提供的模型 ID">
+  <label class="field-label" for="reasoning-effort">思考强度 · 翻译与论文助手</label>
+  <select id="reasoning-effort" class="field-input" aria-describedby="reasoning-effort-hint"><option value="default">服务默认</option><option value="none">关闭（none）</option><option value="minimal">极低（minimal）</option><option value="low">低（low）</option><option value="medium">中（medium）</option><option value="high">高（high）</option><option value="xhigh">极高（xhigh）</option><option value="max">最高（max）</option></select>
+  <p class="field-hint" id="reasoning-effort-hint">选择后自动保存，关闭或重启后保留。翻译与论文助手共用；默认由服务决定，其他档位需模型支持，较高强度通常增加耗时和 Token 用量。</p>
+  <label class="field-label" for="api-key">API Key</label><div class="key-field"><input id="api-key" class="field-input" type="password" required autocomplete="off" placeholder="粘贴你的 API Key"><button type="button" id="key-toggle" aria-label="显示 API Key">显示</button></div>
+  <p class="field-hint">API 地址、模型、思考强度和 Key 保存在本机，启动时自动恢复。Key 使用当前 Windows 账户加密。保存位置：<span id="settings-storage-path" class="settings-storage-path">%LOCALAPPDATA%\PaperReader\api-settings.json</span>论文相关文字会发送到你配置的服务；本机模型可使用任意非空 Key。</p>
+  <div class="inline-error" id="settings-error" role="alert"></div><div class="dialog-footer"><button type="button" id="test-api" class="secondary">测试连接</button><button type="submit" class="primary">保存设置</button></div>
+</form></dialog>
+<dialog id="delete-dialog"><div class="dialog-heading"><h2>删除这篇论文？</h2><button class="close-button" data-close="delete-dialog" aria-label="关闭">×</button></div><p class="settings-intro">论文 PDF 和已保存的译文会从本机论文库中删除。</p><div class="dialog-footer"><button class="secondary" data-close="delete-dialog">取消</button><button class="primary" id="delete-confirm">删除论文</button></div></dialog>
+<div id="toast" class="toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+</body></html>
